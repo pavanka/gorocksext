@@ -1,0 +1,5 @@
+pushd cpp
+g++ -std=c++11 -shared -I/home/me/rocksdb/include/ -L/home/me/rocksdb -fpic test.cpp -lrocksdb -lbz2 -lpthread -lsnappy -lz -o libfoo.so
+popd
+go build .
+LD_LIBRARY_PATH=/home/me/rocksdb:cpp ./test
