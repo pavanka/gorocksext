@@ -1,17 +1,22 @@
-#include "rocksdb/c.h"
-#include "rocksdb/db.h"
+#include <iostream>
 #include "test.h"
+#include "rocksdb/db.h"
 
 using rocksdb::DB;
+using namespace std;
 
 extern "C" {
   struct rocksdb_t{DB* rep;};
-}
 
-int getNumLevels(const char *name) {
-  rocksdb_options_t *options = rocksdb_options_create();
-  rocksdb_options_set_create_if_missing(options, 1);
-  char* err = NULL;
-  rocksdb_t* db = rocksdb_open(options, name, &err);
-	return db->rep->NumberLevels();
+  int getNumLevels(const char *name) {
+    rocksdb_options_t *options = rocksdb_options_create();
+    rocksdb_options_set_create_if_missing(options, 1);
+    char* err = NULL;
+    rocksdb_t* db = rocksdb_open(options, name, &err);
+    return db->rep->NumberLevels();
+  }
+
+  void printDBName(rocksdb_t* db) {
+    cout << db->rep->GetName() << endl;
+  }
 }
