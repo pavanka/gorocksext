@@ -29,7 +29,7 @@ func printDBName(name string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c_db := (*C.struct_rocksdb_t)(db.GetDb())
+	c_db := (*C.struct_rocksdb_t)(db.UnsafeGetDB())
 	C.printDBName(c_db)
 }
 
