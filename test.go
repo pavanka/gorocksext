@@ -8,31 +8,40 @@ package main
 import "C"
 
 import (
-	"fmt"
-	"log"
+	"errors"
 	"unsafe"
 
-	"github.com/tecbot/gorocksdb"
+	"github.com/pavanka/gorocksdb"
 )
 
-func printNumLevel() {
-	cs := C.CString("/tmp/yolo")
-	defer C.free(unsafe.Pointer(cs))
-	val := int(C.getNumLevels(cs))
-	fmt.Println(val)
-}
-
-func printDBName(name string) {
-	opts := gorocksdb.NewDefaultOptions()
-	opts.SetCreateIfMissing(true)
-	db, err := gorocksdb.OpenDb(opts, name)
-	if err != nil {
-		log.Fatal(err)
+func NewIterators(opts *gorocksdb.ReadOptions, db *gorocksdb.DB, cfs []*gorocksdb.ColumnFamilyHandle) ([]*gorocksdb.Iterator, error) {
+	size := len(cfs)
+	cfsC := make([]*C.rocksdb_column_family_handle_t, size)
+	for _, cf := range cfs {
+		cfsC = append(cfsC, (*C.rocksdb_column_family_handle_t)(cf.UnsafeGetCFHandler()))
 	}
-	c_db := (*C.struct_rocksdb_t)(db.UnsafeGetDB())
-	C.printDBName(c_db)
+
+	iters := make([]*C.rocksdb_iterator_t, size)
+	var cErr *C.char
+	C.getIterators(
+		(*C.rocksdb_readoptions_t)(opts.UnsafeGetReadOptions()),
+		(*C.rocksdb_t)(db.UnsafeGetDB()),
+		&cfsC[0],
+		&iters[0],
+		C.int(size),
+		&cErr,
+	)
+	if cErr != nil {
+		defer C.free(unsafe.Pointer(cErr))
+		return nil, errors.New(C.GoString(cErr))
+	}
+
+	var iterators []*gorocksdb.Iterator
+	for _, iter := range iters {
+		iterators = append(iterators, gorocksdb.NewNativeIterator(iter))
+	}
+	return iterators, nil
 }
 
 func main() {
-	printDBName("/tmp/yolo")
 }
