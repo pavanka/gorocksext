@@ -1,5 +1,8 @@
+set -e
+set -x
 pushd cpp
-g++ -std=c++11 -shared -I/home/me/rocksdb/include/ -L/home/me/rocksdb -fpic test.cpp -lrocksdb -lbz2 -lpthread -lsnappy -lz -o libfoo.so
+g++ -std=c++11 -shared -I/home/me/rocksdb/include/ -I/home/me/rocksdb/include/utilities -L/home/me/rocksdb -fpic extensions.cpp -lrocksdb -lbz2 -lpthread -lsnappy -lz -o libextensions.so
 popd
-go build .
-LD_LIBRARY_PATH=/home/me/rocksdb:cpp ./test
+golint ./...
+CGO_CFLAGS="-I/home/me/rocksdb/include/ -I./cpp" CGO_LDFLAGS="-L/home/me/rocksdb -lrocksdb -lstdc++ -lm -lz -L./cpp -lextensions" go install .
+rm cpp/libextensions.so
